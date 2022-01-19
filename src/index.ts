@@ -39,9 +39,11 @@ class Result<T, E extends Error> {
     unwrap(): T {
         if (this instanceof Ok) {
             return this.ok;
+        } else if (this instanceof Err) {
+            throw this.err;
+        } else {
+            throw new Error('Unexpected state!');
         }
-
-        throw new Error('Unwrap on Err');
     }
 
     /**
