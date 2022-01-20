@@ -3,6 +3,10 @@ class Result<T, E extends Error> {
      * Constructs an instance of `Ok` from the provided value
      * @param v the value to make a result from
      * @returns an Ok instance where the inner value is `v`
+     * @example
+     * ```ts
+     * const anOkLiteral: Result<number, never> = Result.ok(5);
+     * ```
      */
     static ok<T>(v: T): Ok<T, never> {
         return new Ok(v);
@@ -12,6 +16,10 @@ class Result<T, E extends Error> {
      * Constructs an instance of `Err` from the provided value
      * @param e the value to make a result from
      * @returns an Err instance where the inner value is `e`
+     * @example
+     * ```ts
+     * const anErrLiteral: Result<never, Error> = new Error('Some Error');
+     * ```
      */
     static err<E extends Error>(e: E): Err<never, E> {
         return new Err(e);
@@ -19,6 +27,11 @@ class Result<T, E extends Error> {
 
     /**
      * @returns true if this result is Ok
+     * @example
+     * ```ts
+     * const anOk: Result<number, never> = Result.ok(5);
+     * anOk.isOk() // true
+     * ```
      */
     isOk(): boolean {
         return this instanceof Ok;
@@ -26,15 +39,33 @@ class Result<T, E extends Error> {
 
     /**
      * @returns true if this result is Err
+     * @example
+     * ```ts
+     * const anErr: Result<never, Error> = new Error('Some Error');
+     * anErr.isErr() // true
+     * ```
      */
     isErr(): boolean {
         return this instanceof Err;
     }
 
     /**
-     * Given a result `R`, returns the inner Ok value, or throws an exception. 
-     * @returns The inner `Ok<T>`
-     * @throws if R is `Err<E>`
+     * If `this` is `Ok`, returns the inner `T` value. If `this` is `Err`,
+     * `unwrap` throws the inner exception.
+     * 
+     * @returns The inner `T` value
+     * @throws if `this` is `Err<E>`
+     * @example
+     * ```ts
+     * // Division by 0 returns an Err
+     * type SafeDivideFunc = (n: number, m: number) => Result<number, Error>;
+     * const safeDivide: SafeDivideFunc = () => {
+     *  // ...
+     * };
+     * 
+     * safeDivide(10, 2).unwrap() // 5
+     * safeDivide(10, 0).unwrap() // throws an exception
+     * ```
      */
     unwrap(): T {
         if (this instanceof Ok) {
@@ -50,6 +81,17 @@ class Result<T, E extends Error> {
      * Unwraps the result `R` or returns the provided default if `R` is `Err<E>`
      * @param dfault the value to return if R is Err<E>
      * @returns The inner `Ok<T>` or the provided default
+     * @example
+     * ```ts
+     * // Division by 0 returns an Err
+     * type SafeDivideFunc = (n: number, m: number) => Result<number, Error>;
+     * const safeDivide: SafeDivideFunc = () => {
+     *  // ...
+     * };
+     * 
+     * safeDivide(10, 2).unwrapOr("failed at division") // 5
+     * safeDivide(10, 0).unwrapOr("failed at division") // "failed at division" 
+     * ```
      */
     unwrapOr(dfault: T): T {
         if (this instanceof Ok) {
@@ -60,10 +102,24 @@ class Result<T, E extends Error> {
     }
 
     /**
-     * The dual of {@link Result.unwrap} returns the inner E value
-     * instead of the inner Ok
-     * @returns The inner `Err<E>`
-     * @throws If R is `Ok<T>`
+     * The dual of {@link unwrap}.
+     * 
+     * If `this` is `Err`, returns the inner `E` value. If `this` is `Ok`,
+     * `unwrapErr` throws an exception.
+     * 
+     * @returns The inner `E` value
+     * @throws If `this` is `Ok<T>`
+     * @example
+     * ```ts
+     * // Division by 0 returns an Err
+     * type SafeDivideFunc = (n: number, m: number) => Result<number, Error>;
+     * const safeDivide: SafeDivideFunc = () => {
+     *  // ...
+     * };
+     * 
+     * safeDivide(10, 0).unwrapErr() // returns the Error object
+     * safeDivide(10, 2).unwrapErr() // throws an exception
+     * ```
      */
     unwrapErr(): E {
         if (this instanceof Err) {
@@ -74,11 +130,31 @@ class Result<T, E extends Error> {
     }
 
     /**
-     * Creates a new result by applying the provided function to the inner Ok value,
-     * or returns the result as is if it's an Err
+     * Creates a new result by applying the provided function to the inner `T` value,
+     * if the result is `Ok`. Otherwise, if the result is `Err` it is returned as-is.
+     * 
+     * This function is distinct from {@link andThen} because the callback `f`
+     * maps *values* to *values*. While the callback in {@link andThen} maps
+     * *values* to *Results*. Use this function in conjunction with {@link mapErr}
+     * to conditionally operate on inner values depending on if the `Result` is `Ok`
+     * or `Err`.
+     * 
      * @param f A function for transforming the inner Ok value
      * @returns A new result where the inner value has been transformed and
      * packaged up in another result
+     * ```ts
+     * // Division by 0 returns an Err
+     * type SafeDivideFunc = (n: number, m: number) => Result<number, Error>;
+     * const safeDivide: SafeDivideFunc = () => {
+     *  // ...
+     * };
+     * 
+     * let divideThenSquare: Result<number, Error>;
+     * divideThenSquare = safeDivide(10, 2).map(ans => ans*ans);
+     * 
+     * divideThenSquare.isOk() // true
+     * divideThenSquare.unwrap() // 25
+     * ```
      */
     map<U>(f: (a: T) => U): Result<U, E> {
         if (this instanceof Ok) {
