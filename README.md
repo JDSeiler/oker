@@ -9,4 +9,6 @@ README or somehwere else), but until I decide how I want to write or otherwise
 generate that Markdown the JSDoc is the primary source for information.
 
 TODO:
+- Documentation updates (examples and better phrasing)
 - API updates
+- Documentation polish (consistent use of monospace, etc.)
