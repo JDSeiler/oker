@@ -59,7 +59,7 @@ class Result<T, E extends Error> {
      * ```ts
      * // Division by 0 returns an Err
      * type SafeDivideFunc = (n: number, m: number) => Result<number, Error>;
-     * const safeDivide: SafeDivideFunc = () => {
+     * const safeDivide: SafeDivideFunc = (n, m) => {
      *  // ...
      * };
      * 
@@ -85,7 +85,7 @@ class Result<T, E extends Error> {
      * ```ts
      * // Division by 0 returns an Err
      * type SafeDivideFunc = (n: number, m: number) => Result<number, Error>;
-     * const safeDivide: SafeDivideFunc = () => {
+     * const safeDivide: SafeDivideFunc = (n, m) => {
      *  // ...
      * };
      * 
@@ -113,7 +113,7 @@ class Result<T, E extends Error> {
      * ```ts
      * // Division by 0 returns an Err
      * type SafeDivideFunc = (n: number, m: number) => Result<number, Error>;
-     * const safeDivide: SafeDivideFunc = () => {
+     * const safeDivide: SafeDivideFunc = (n, m) => {
      *  // ...
      * };
      * 
@@ -142,10 +142,11 @@ class Result<T, E extends Error> {
      * @param f A function for transforming the inner Ok value
      * @returns A new result where the inner value has been transformed and
      * packaged up in another result
+     * @example
      * ```ts
      * // Division by 0 returns an Err
      * type SafeDivideFunc = (n: number, m: number) => Result<number, Error>;
-     * const safeDivide: SafeDivideFunc = () => {
+     * const safeDivide: SafeDivideFunc = (n, m) => {
      *  // ...
      * };
      * 
@@ -173,10 +174,29 @@ class Result<T, E extends Error> {
     }
 
     /**
-     * The dual of {@link Result.map}.
-     * @param f a function from transforming the inner Err value
+     * The dual of {@link Result.map}
+     * 
+     * Creates a new result by applying the provided function to the inner `E` value,
+     * if the result is `Err`. Otherwise, if the result is `Ok` it is returned as-is.
+     *
+     * 
+     * @param f a function for transforming the inner Err value
      * @returns A new result where the inner error has been transformed and packaged
      * up in another result.
+     * @example
+     * ```ts
+     * // Division by 0 returns an Err
+     * type SafeDivideFunc = (n: number, m: number) => Result<number, Error>;
+     * const safeDivide: SafeDivideFunc = (n, m) => {
+     *  // ...
+     * };
+     * 
+     * let divideThenSquare: Result<number, Error>;
+     * divideThenSquare = safeDivide(10, 0).mapError(e => new Error('Totally different Error'));
+     * 
+     * divideThenSquare.isErr() // true
+     * divideThenSquare.unwrapErr().message // "Totally different Error" 
+     * ```
      */
     mapErr<X extends Error>(f: (e: E) => X): Result<T, X> {
         if (this instanceof Err) {
@@ -192,8 +212,32 @@ class Result<T, E extends Error> {
      * 
      * If `this` is an Err, the Result is returned as is. 
      * 
+     * This is distinct from {@link map} because `map` takes a function
+     * that maps *values* to *values*. `andThen` expects a function
+     * that maps *values* into other `Results`.
+     * 
      * @param f a function for transforming an Ok<T> into another Result
      * @returns the transformed result
+     * @example
+     * ```ts
+     * // Division by 0 returns an Err
+     * type SafeDivideFunc = (n: number, m: number) => Result<number, Error>;
+     * const safeDivide: SafeDivideFunc = (n, m) => {
+     *  // ...
+     * };
+     * 
+     * // Sqrt of a negative is not allowed (we're not very mathematically mature)
+     * const SqrtFunc = (n: number) => Result<number, Error>;
+     * const sqrt: SqrtFunction = (n) => {
+     *  // ...
+     * };
+     * 
+     * safeDivide(10, 2).andThen(sqrt).map(finalRes => {
+     *  // process the result
+     * }).mapErr(e => {
+     *  // any Err values will fall through to here for processing!
+     * });
+     * ```
      */
     andThen<U, X extends Error>(f: (a: T) => Result<U, X>): Result<U, E | X> {
         if (this instanceof Ok) {
